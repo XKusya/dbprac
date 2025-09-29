@@ -163,14 +163,21 @@ ALTER TABLE "TeamRegistration"
 ADD CONSTRAINT unique_team_matchup UNIQUE (team_id, matchup_id);
 
 ALTER TABLE "MatchupResult"
-ADD CONSTRAINT unique_matchup_place UNIQUE (matchup_id, place);
-
-ALTER TABLE "MatchupResult"
+ADD CONSTRAINT unique_matchup_place UNIQUE (matchup_id, place),
 ADD CONSTRAINT check_athlet_or_team CHECK (
     (athlet_registration_id IS NOT NULL AND team_registration_id IS NULL)
     OR
     (athlet_registration_id IS NULL AND team_registration_id IS NOT NULL)
 );
+
+ALTER TABLE "Series"
+ADD CONSTRAINT check_date CHECK (start_date <= end_date);
+
+ALTER TABLE "Event"
+ADD CONSTRAINT check_date CHECK (start_date <= end_date);
+
+ALTER TABLE "Matchup"
+ADD CONSTRAINT check_date CHECK (start_date <= end_date);
 
 INSERT INTO "Planner" ("organization_name", "contact_person", "email", "password_hash") VALUES
 ('Global Sports Federation', 'John Doe', 'john.doe@gsf.com', 'hash1'),
@@ -288,37 +295,362 @@ INSERT INTO "SeriesPlanner" ("planner_id", "series_id") VALUES
 (2, 3), (1, 1), (1, 2), (8, 4), (9, 5), (3, 6), (4, 7), (5, 8), (6, 9), (7, 10),
 (10, 1), (10, 2), (10, 3), (10, 4), (10, 5), (10, 6), (10, 7), (10, 8), (10, 9), (10, 10);
 
-INSERT INTO "TeamMember" ("athlete_id", "team_id", "role") VALUES
-(2, 1, 'Forward'), (4, 2, 'Forward'), (1, 2, 'Forward'),
-(5, 3, 'Left Wing'), (6, 4, 'Center'), (7, 4, 'Center'),
-(15, 5, 'AWPer'), (16, 6, 'AWPer'),
-(18, 7, 'Captain'), (17, 8, 'Captain'),
-(13, 9, 'Pitcher/Hitter'), (14, 10, 'Outfielder'),
-(9, 11, 'Driver'), (10, 12, 'Driver'),
-(1, 1, 'Captain'), (2, 2, 'Captain'), (5, 4, 'Forward'), (6, 3, 'Forward'),
-(15, 6, 'Rifler'), (16, 5, 'Rifler'), (18, 8, 'Support'), (17, 7, 'Support');
+INSERT INTO "TeamMember" ("athlete_id", "team_id", "role")
+VALUES
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Lionel Messi'),
+    (SELECT id FROM "Team" WHERE name = 'Real Madrid'),
+    'Forward'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Kylian Mbappé'),
+    (SELECT id FROM "Team" WHERE name = 'PSG'),
+    'Forward'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Lionel Messi'),
+    (SELECT id FROM "Team" WHERE name = 'PSG'),
+    'Forward'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Alexander Ovechkin'),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Left Wing'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Connor McDavid'),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Center'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Sidney Crosby'),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Center'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Oleksandr "s1mple" Kostyliev'),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'AWPer'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Mathieu "ZywOo" Herbaut'),
+    (SELECT id FROM "Team" WHERE name = 'Team Vitality'),
+    'AWPer'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Clement "Puppey" Ivanov'),
+    (SELECT id FROM "Team" WHERE name = 'Team Secret'),
+    'Captain'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Johan "N0tail" Sundstein'),
+    (SELECT id FROM "Team" WHERE name = 'OG'),
+    'Captain'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Shohei Ohtani'),
+    (SELECT id FROM "Team" WHERE name = 'Los Angeles Dodgers'),
+    'Pitcher/Hitter'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Mike Trout'),
+    (SELECT id FROM "Team" WHERE name = 'New York Yankees'),
+    'Outfielder'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Max Verstappen'),
+    (SELECT id FROM "Team" WHERE name = 'Red Bull Racing'),
+    'Driver'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Lewis Hamilton'),
+    (SELECT id FROM "Team" WHERE name = 'Mercedes-AMG Petronas F1 Team'),
+    'Driver'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Cristiano Ronaldo'),
+    (SELECT id FROM "Team" WHERE name = 'PSG'),
+    'Captain'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Alexander Ovechkin'),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Forward'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Connor McDavid'),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Forward'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Oleksandr "s1mple" Kostyliev'),
+    (SELECT id FROM "Team" WHERE name = 'Team Vitality'),
+    'Rifler'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Mathieu "ZywOo" Herbaut'),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'Rifler'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Clement "Puppey" Ivanov'),
+    (SELECT id FROM "Team" WHERE name = 'OG'),
+    'Support'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Johan "N0tail" Sundstein'),
+    (SELECT id FROM "Team" WHERE name = 'Team Secret'),
+    'Support'
+);
 
-INSERT INTO "AthletRegistration" ("athlet_id", "matchup_id", "payment_status", "status") VALUES
-(1, 1, 'Paid', 'Confirmed'), (2, 2, 'Paid', 'Confirmed'), (3, 3, 'Paid', 'Confirmed'),
-(4, 4, 'Paid', 'Confirmed'), (5, 5, 'Paid', 'Confirmed'), (6, 6, 'Paid', 'Confirmed'),
-(7, 7, 'Paid', 'Confirmed'), (8, 8, 'Paid', 'Confirmed'), (9, 9, 'Paid', 'Confirmed'),
-(10, 10, 'Paid', 'Confirmed'), 
-(11, 1, 'Paid', 'Confirmed'), (12, 2, 'Paid', 'Confirmed'), (13, 3, 'Paid', 'Confirmed'),
-(14, 4, 'Paid', 'Confirmed'), (15, 5, 'Paid', 'Confirmed'), (16, 6, 'Paid', 'Confirmed'),
-(17, 7, 'Paid', 'Confirmed'), (18, 8, 'Paid', 'Confirmed'), (19, 9, 'Paid', 'Confirmed'),
-(20, 10, 'Paid', 'Confirmed');
+INSERT INTO "AthletRegistration" ("athlet_id", "matchup_id", "payment_status", "status")
+VALUES
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Lionel Messi'),
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Day 1' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Cristiano Ronaldo'),
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Final Table' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Neymar Jr'),
+    (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Kylian Mbappé'),
+    (SELECT id FROM "Matchup" WHERE name = 'Gold Medal Match' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Ice Hockey')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Alexander Ovechkin'),
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'Dota 2 Championship')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Connor McDavid'),
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'CS:GO Major')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Sidney Crosby'),
+    (SELECT id FROM "Matchup" WHERE name = 'Race Day' AND event_id = (SELECT id FROM "Event" WHERE name = 'Monaco Grand Prix')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Magnus Carlsen'),
+    (SELECT id FROM "Matchup" WHERE name = 'Group A: Team 1 vs Team 2' AND event_id = (SELECT id FROM "Event" WHERE name = 'Group Stage')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Max Verstappen'),
+    (SELECT id FROM "Matchup" WHERE name = 'Game Day 1: Team X vs Team Y' AND event_id = (SELECT id FROM "Event" WHERE name = 'Regular Season')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Lewis Hamilton'),
+    (SELECT id FROM "Matchup" WHERE name = 'Final Game' AND event_id = (SELECT id FROM "Event" WHERE name = 'Baseball Championship')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Johannes Thingnes Bø'),
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Day 1' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Martin Fourcade'),
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Final Table' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Shohei Ohtani'),
+    (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Mike Trout'),
+    (SELECT id FROM "Matchup" WHERE name = 'Gold Medal Match' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Ice Hockey')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Oleksandr "s1mple" Kostyliev'),
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'Dota 2 Championship')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Mathieu "ZywOo" Herbaut'),
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'CS:GO Major')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Johan "N0tail" Sundstein'),
+    (SELECT id FROM "Matchup" WHERE name = 'Race Day' AND event_id = (SELECT id FROM "Event" WHERE name = 'Monaco Grand Prix')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Clement "Puppey" Ivanov'),
+    (SELECT id FROM "Matchup" WHERE name = 'Group A: Team 1 vs Team 2' AND event_id = (SELECT id FROM "Event" WHERE name = 'Group Stage')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Phil Ivey'),
+    (SELECT id FROM "Matchup" WHERE name = 'Game Day 1: Team X vs Team Y' AND event_id = (SELECT id FROM "Event" WHERE name = 'Regular Season')),
+    'Paid',
+    'Confirmed'
+),
+(
+    (SELECT id FROM "Athlet" WHERE name = 'Gerard Piqué'),
+    (SELECT id FROM "Matchup" WHERE name = 'Final Game' AND event_id = (SELECT id FROM "Event" WHERE name = 'Baseball Championship')),
+    'Paid',
+    'Confirmed'
+);
 
-INSERT INTO "TeamRegistration" ("matchup_id", "team_id", "payment_status", "status") VALUES
-(1, 3, 'Pending', 'Registered'), (2, 3, 'Pending', 'Registered'),
-(3, 4, 'Pending', 'Registered'), (4, 4, 'Pending', 'Registered'),
-(5, 5, 'Pending', 'Registered'), (6, 5, 'Pending', 'Registered'),
-(7, 6, 'Pending', 'Registered'), (8, 6, 'Pending', 'Registered'),
-(9, 10, 'Pending', 'Registered'), (10, 10, 'Pending', 'Registered'),
-(1, 8, 'Pending', 'Registered'), (2, 8, 'Pending', 'Registered'),
-(3, 9, 'Pending', 'Registered'), (4, 9, 'Pending', 'Registered'),
-(5, 3, 'Pending', 'Registered'), (6, 3, 'Pending', 'Registered'),
-(7, 4, 'Pending', 'Registered'), (8, 4, 'Pending', 'Registered'),
-(9, 5, 'Pending', 'Registered'), (10, 5, 'Pending', 'Registered');
+INSERT INTO "TeamRegistration" ("matchup_id", "team_id", "payment_status", "status")
+VALUES
+-- Команды регистрируются на матчах
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Day 1' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Final Table' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Gold Medal Match' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Ice Hockey')),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'Dota 2 Championship')),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'CS:GO Major')),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Race Day' AND event_id = (SELECT id FROM "Event" WHERE name = 'Monaco Grand Prix')),
+    (SELECT id FROM "Team" WHERE name = 'Team Vitality'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Group A: Team 1 vs Team 2' AND event_id = (SELECT id FROM "Event" WHERE name = 'Group Stage')),
+    (SELECT id FROM "Team" WHERE name = 'Team Vitality'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Game Day 1: Team X vs Team Y' AND event_id = (SELECT id FROM "Event" WHERE name = 'Regular Season')),
+    (SELECT id FROM "Team" WHERE name = 'Los Angeles Dodgers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Final Game' AND event_id = (SELECT id FROM "Event" WHERE name = 'Baseball Championship')),
+    (SELECT id FROM "Team" WHERE name = 'Los Angeles Dodgers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Day 1' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    (SELECT id FROM "Team" WHERE name = 'Team Secret'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Main Event - Final Table' AND event_id = (SELECT id FROM "Event" WHERE name = 'Main Event - Texas Hold''em')),
+    (SELECT id FROM "Team" WHERE name = 'Team Secret'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
+    (SELECT id FROM "Team" WHERE name = 'OG'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Gold Medal Match' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Ice Hockey')),
+    (SELECT id FROM "Team" WHERE name = 'OG'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'Dota 2 Championship')),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Grand Final' AND event_id = (SELECT id FROM "Event" WHERE name = 'CS:GO Major')),
+    (SELECT id FROM "Team" WHERE name = 'Washington Capitals'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Race Day' AND event_id = (SELECT id FROM "Event" WHERE name = 'Monaco Grand Prix')),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Group A: Team 1 vs Team 2' AND event_id = (SELECT id FROM "Event" WHERE name = 'Group Stage')),
+    (SELECT id FROM "Team" WHERE name = 'Edmonton Oilers'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Game Day 1: Team X vs Team Y' AND event_id = (SELECT id FROM "Event" WHERE name = 'Regular Season')),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'Pending',
+    'Registered'
+),
+(
+    (SELECT id FROM "Matchup" WHERE name = 'Final Game' AND event_id = (SELECT id FROM "Event" WHERE name = 'Baseball Championship')),
+    (SELECT id FROM "Team" WHERE name = 'Natus Vincere'),
+    'Pending',
+    'Registered'
+);
+
+
 
 INSERT INTO "MatchupResult" ("matchup_id", "athlet_registration_id", "team_registration_id", "result", "place", "status") VALUES
 (1, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 1 AND matchup_id = 1), NULL, '15000 chips', 1, 'Official'),
@@ -327,26 +659,11 @@ INSERT INTO "MatchupResult" ("matchup_id", "athlet_registration_id", "team_regis
 (2, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 2 AND matchup_id = 2), NULL, '200000 chips', 1, 'Official'),
 (2, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 12 AND matchup_id = 2), NULL, '150000 chips', 2, 'Official'),
 
-(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 3), '2-1', 1, 'Official'),
-(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 9 AND matchup_id = 3), '1-2', 2, 'Official'),
+(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 4), '2-1', 1, 'Official'),
+(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 8 AND matchup_id = 4), '1-2', 2, 'Official'),
 
-(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 4), '4-3', 1, 'Official'),
-(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 9 AND matchup_id = 4), '3-4', 2, 'Official'),
+(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 3), '4-3', 1, 'Official'),
+(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 8 AND matchup_id = 3), '3-4', 2, 'Official'),
 
 (5, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 5), '3-2', 1, 'Official'),
-(5, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 3 AND matchup_id = 5), '2-3', 2, 'Official'),
-
-(6, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 6), '16-14', 1, 'Official'),
-(6, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 3 AND matchup_id = 6), '14-16', 2, 'Official'),
-
-(7, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 9 AND matchup_id = 7), NULL, '1:34:22.123', 1, 'Official'),
-(7, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 17 AND matchup_id = 7), NULL, '1:34:23.500', 2, 'Official'),
-
-(8, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 6 AND matchup_id = 8), '3-0', 1, 'Official'),
-(8, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 8), '0-3', 2, 'Official'),
-
-(9, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 10 AND matchup_id = 9), '5-4', 1, 'Official'),
-(9, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 9), '4-5', 2, 'Official'),
-
-(10, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 10 AND matchup_id = 10), '5-3', 1, 'Official'),
-(10, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 10), '3-5', 2, 'Official');
+(5, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 3 AND matchup_id = 5), '2-3', 2, 'Official');
