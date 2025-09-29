@@ -1,7 +1,17 @@
 CREATE DATABASE "sports";
 
+CREATE TYPE EventStatus AS ENUM ('Preparing', 'Scheduled', 'InProgress', 'Finished', 'Canceled', 'Postponed');
+
+CREATE TYPE PaymentStatus AS ENUM ('Pending', 'Paid', 'Failed', 'Refunded');
+
+CREATE TYPE RegistrationStatus AS ENUM ('Confirmed', 'Registered', 'PendingApproval', 'Withdrawn', 'Disqualified');
+
+CREATE TYPE ResultStatus AS ENUM ('Provisional', 'Official', 'Disputed', 'Canceled');
+
+CREATE TYPE OutcomeStatus AS ENUM ('Winner', 'Loser', 'Draw', 'Eliminated', 'Retired', 'DNF');
+
 CREATE TABLE "Planner" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "organization_name" VARCHAR(255),
     "contact_person" VARCHAR(255),
     "email" VARCHAR(255),
@@ -10,7 +20,7 @@ CREATE TABLE "Planner" (
 );
 
 CREATE TABLE "Athlet" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(255),
     "date_of_birth" DATE,
     "country" VARCHAR(255),
@@ -20,7 +30,7 @@ CREATE TABLE "Athlet" (
 );
 
 CREATE TABLE "Team" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(255),
     "country" VARCHAR(255),
     PRIMARY KEY ("id")
@@ -36,7 +46,7 @@ CREATE TABLE "TeamMember" (
 );
 
 CREATE TABLE "Discipline" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(255),
     "unit" VARCHAR(255),
     "result_format" VARCHAR(255),
@@ -44,7 +54,7 @@ CREATE TABLE "Discipline" (
 );
 
 CREATE TABLE "Series" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(255),
     "start_date" DATE,
     "end_date" DATE,
@@ -52,13 +62,13 @@ CREATE TABLE "Series" (
 );
 
 CREATE TABLE "Event" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "series_id" INT NOT NULL,
     "discipline_id" INT NOT NULL,
     "name" VARCHAR(255),
     "start_date" DATE,
     "end_date" DATE,
-    "status" VARCHAR(255),
+    "status" EventStatus, 
     "venue" TEXT,
     "team_size_min" SMALLINT,
     "team_size_max" SMALLINT,
@@ -68,40 +78,40 @@ CREATE TABLE "Event" (
 );
 
 CREATE TABLE "Matchup" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "event_id" INT NOT NULL,
     "name" VARCHAR(255),
     "start_date" DATE,
     "end_date" DATE,
-    "status" VARCHAR(255),
+    "status" EventStatus, 
     PRIMARY KEY ("id"),
     FOREIGN KEY ("event_id") REFERENCES "Event" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE "AthletRegistration" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "athlet_id" INT NOT NULL,
     "matchup_id" INT NOT NULL,
-    "payment_status" VARCHAR(255),
-    "status" VARCHAR(255),
+    "payment_status" PaymentStatus,
+    "status" RegistrationStatus, 
     PRIMARY KEY ("id"),
     FOREIGN KEY ("athlet_id") REFERENCES "Athlet" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("matchup_id") REFERENCES "Matchup" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE "TeamRegistration" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "matchup_id" INT NOT NULL,
     "team_id" INT NOT NULL,
-    "payment_status" VARCHAR(255),
-    "status" VARCHAR(255),
+    "payment_status" PaymentStatus, 
+    "status" RegistrationStatus, 
     PRIMARY KEY ("id"),
     FOREIGN KEY ("matchup_id") REFERENCES "Matchup" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("team_id") REFERENCES "Team" ("id") ON DELETE CASCADE
 );
 
 CREATE TABLE "PrizeFund" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "event_id" INT NOT NULL,
     "total_amount" MONEY,
     PRIMARY KEY ("id"),
@@ -109,7 +119,7 @@ CREATE TABLE "PrizeFund" (
 );
 
 CREATE TABLE "Prize" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "prize_fund_id" INT NOT NULL,
     "place" SMALLINT,
     "amount" MONEY,
@@ -126,138 +136,153 @@ CREATE TABLE "SeriesPlanner" (
 );
 
 CREATE TABLE "MatchupResult" (
-    "id" INT NOT NULL,
+    "id" SERIAL NOT NULL,
     "matchup_id" INT NOT NULL,
     "athlet_registration_id" INT,
     "team_registration_id" INT,
     "result" VARCHAR(255),
     "place" SMALLINT,
-    "status" VARCHAR(255),
+    "status" ResultStatus, 
+    "outcome" OutcomeStatus,
     PRIMARY KEY ("id"),
     FOREIGN KEY ("matchup_id") REFERENCES "Matchup" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("athlet_registration_id") REFERENCES "AthletRegistration" ("id") ON DELETE CASCADE,
     FOREIGN KEY ("team_registration_id") REFERENCES "TeamRegistration" ("id") ON DELETE CASCADE
 );
 
+ALTER TABLE "Planner"
+ADD CONSTRAINT planner_email_unique UNIQUE (email);
 
--- СТЕРЖНЕВЫЕ СУЩНОСТИ
-INSERT INTO "Planner" ("id", "organization_name", "contact_person", "email", "password_hash") VALUES
-(1, 'Global Sports Federation', 'John Doe', 'john.doe@gsf.com', 'hash1'),
-(2, 'World Poker Series Org', 'Jane Smith', 'jane.smith@wpso.com', 'hash2'),
-(3, 'Cyber Champions League', 'Alexey Ivanov', 'alex.i@ccl.com', 'hash3'),
-(4, 'International Chess Union', 'Magnus Carlsen', 'contact@icu.com', 'hash4'),
-(5, 'Major League Baseball Org', 'Mike Trout', 'mike.trout@mlb.com', 'hash5'),
-(6, 'FIA', 'Mohammed Ben Sulayem', 'contact@fia.com', 'hash6'),
-(7, 'International Biathlon Union', 'Olle Dahlin', 'info@ibu.com', 'hash7'),
-(8, 'FIFA', 'Gianni Infantino', 'president@fifa.com', 'hash8'),
-(9, 'International Hockey Federation', 'Luc Tardif', 'luc.tardif@iihf.com', 'hash9'),
-(10, 'Universal Sports Events', 'Peter Parker', 'p.parker@use.com', 'hash10');
+ALTER TABLE "Athlet"
+ADD CONSTRAINT athlet_email_unique UNIQUE (email);
 
-INSERT INTO "Discipline" ("id", "name", "unit", "result_format") VALUES
-(1, 'Football', 'goals', 'score'),
-(2, 'Ice Hockey', 'goals', 'score'),
-(3, 'Texas Hold''em Poker', 'chips', 'place'),
-(4, 'Dota 2', 'matches', 'score'),
-(5, 'CS:GO', 'rounds', 'score'),
-(6, 'Chess', 'points', 'win/loss/draw'),
-(7, 'Baseball', 'runs', 'score'),
-(8, 'Formula 1', 'time/laps', 'place/time'),
-(9, 'Biathlon Sprint 10km', 'time', 'time/misses'),
-(10, 'Triathlon', 'time', 'total_time');
+ALTER TABLE "AthletRegistration"
+ADD CONSTRAINT unique_athlet_matchup UNIQUE (athlet_id, matchup_id);
 
--- Мультидисциплинарные турниры
-INSERT INTO "Series" ("id", "name", "start_date", "end_date") VALUES
-(1, 'World Athletic Games 2025', '2025-07-01', '2025-07-15'),
-(2, 'Winter Sports Festival 2026', '2026-02-05', '2026-02-25'),
-(3, 'Celebrity Poker Tour 2025', '2025-10-20', '2025-10-25'), 
--- Одиночные турниры
-(4, 'Global Football Championship', '2025-06-10', '2025-07-10'),
-(5, 'International Hockey League', '2025-09-15', '2026-04-20'),
-(6, 'Esports Masters Series: Fall', '2025-11-01', '2025-11-15'),
-(7, 'Grandmasters Chess Circuit', '2025-05-05', '2025-05-15'),
-(8, 'American Baseball Classic', '2025-08-01', '2025-08-20'),
-(9, 'F1 World Championship 2025', '2025-03-15', '2025-11-23'),
-(10, 'Biathlon World Cup 25/26', '2025-11-29', '2026-03-22');
+ALTER TABLE "TeamRegistration"
+ADD CONSTRAINT unique_team_matchup UNIQUE (team_id, matchup_id);
 
-INSERT INTO "Event" ("id", "series_id", "discipline_id", "name", "start_date", "end_date", "status", "venue", "team_size_min", "team_size_max") VALUES
--- Событие для полностью организованного турнира по покеру
-(1, 3, 3, 'Main Event - Texas Hold''em', '2025-10-20', '2025-10-25', 'Finished', 'Casino de Monte-Carlo, Monaco', 1, 1),
--- События для мультидисциплинарных турниров 
-(2, 1, 1, 'Men''s Football Tournament', '2025-07-02', '2025-07-14', 'Preparing', 'Wembley Stadium, London', 11, 11),
-(3, 1, 7, 'Baseball Championship', '2025-07-03', '2025-07-12', 'Preparing', 'Tokyo Dome, Tokyo', 9, 9),
-(4, 2, 2, 'Men''s Ice Hockey', '2026-02-06', '2026-02-24', 'Preparing', 'Bell Centre, Montreal', 6, 22),
-(5, 2, 9, 'Biathlon Men''s Sprint', '2026-02-10', '2026-02-10', 'Preparing', 'Holmenkollen, Oslo', 1, 1),
--- События для одиночных турниров 
-(6, 4, 1, 'Group Stage', '2025-06-10', '2025-06-25', 'Preparing', 'Various stadiums', 11, 11),
-(7, 5, 2, 'Regular Season', '2025-09-15', '2026-03-30', 'Preparing', 'Various arenas', 6, 22),
-(8, 6, 4, 'Dota 2 Championship', '2025-11-01', '2025-11-08', 'Preparing', 'Avicii Arena, Stockholm', 5, 5),
-(9, 6, 5, 'CS:GO Major', '2025-11-09', '2025-11-15', 'Preparing', 'Lanxess Arena, Cologne', 5, 5),
-(10, 7, 6, 'World Chess Blitz Championship', '2025-05-08', '2025-05-10', 'Preparing', 'Dubai Exhibition Centre, Dubai', 1, 1),
-(11, 9, 8, 'Monaco Grand Prix', '2025-05-22', '2025-05-25', 'Preparing', 'Circuit de Monaco', 1, 2);
+ALTER TABLE "MatchupResult"
+ADD CONSTRAINT unique_matchup_place UNIQUE (matchup_id, place);
 
-INSERT INTO "Matchup" ("id", "event_id", "name", "start_date", "end_date", "status") VALUES
-(1, 1, 'Main Event - Day 1', '2025-10-20', '2025-10-21', 'Finished'),
-(2, 1, 'Main Event - Final Table', '2025-10-25', '2025-10-25', 'Finished'),
-(3, 2, 'Final: Team A vs Team B', '2025-07-14', '2025-07-14', 'Scheduled'),
-(4, 4, 'Gold Medal Match', '2026-02-24', '2026-02-24', 'Scheduled'),
-(5, 8, 'Grand Final', '2025-11-08', '2025-11-08', 'Scheduled'),
-(6, 9, 'Grand Final', '2025-11-15', '2025-11-15', 'Scheduled'),
-(7, 11, 'Race Day', '2025-05-25', '2025-05-25', 'Scheduled'),
-(8, 6, 'Group A: Team 1 vs Team 2', '2025-06-11', '2025-06-11', 'Scheduled'),
-(9, 7, 'Game Day 1: Team X vs Team Y', '2025-09-15', '2025-09-15', 'Scheduled'),
-(10, 3, 'Final Game', '2025-07-12', '2025-07-12', 'Scheduled');
+ALTER TABLE "MatchupResult"
+ADD CONSTRAINT check_athlet_or_team CHECK (
+    (athlet_registration_id IS NOT NULL AND team_registration_id IS NULL)
+    OR
+    (athlet_registration_id IS NULL AND team_registration_id IS NOT NULL)
+);
 
-INSERT INTO "Athlet" ("id", "name", "date_of_birth", "country", "email", "password_hash") VALUES
-(1, 'Lionel Messi', '1987-06-24', 'Argentina', 'messi@email.com', 'hash_messi'),
-(2, 'Cristiano Ronaldo', '1985-02-05', 'Portugal', 'ronaldo@email.com', 'hash_ronaldo'),
-(3, 'Neymar Jr', '1992-02-05', 'Brazil', 'neymar@email.com', 'hash_neymar'),
-(4, 'Kylian Mbappé', '1998-12-20', 'France', 'mbappe@email.com', 'hash_mbappe'),
-(5, 'Alexander Ovechkin', '1985-09-17', 'Russia', 'ovechkin@email.com', 'hash_ovechkin'),
-(6, 'Connor McDavid', '1997-01-13', 'Canada', 'mcdavid@email.com', 'hash_mcdavid'),
-(7, 'Sidney Crosby', '1987-08-07', 'Canada', 'crosby@email.com', 'hash_crosby'),
-(8, 'Magnus Carlsen', '1990-11-30', 'Norway', 'carlsen@email.com', 'hash_carlsen'),
-(9, 'Max Verstappen', '1997-09-30', 'Netherlands', 'verstappen@email.com', 'hash_verstappen'),
-(10, 'Lewis Hamilton', '1985-01-07', 'UK', 'hamilton@email.com', 'hash_hamilton'),
-(11, 'Johannes Thingnes Bø', '1993-05-16', 'Norway', 'johannes.boe@email.com', 'hash_jboe'),
-(12, 'Martin Fourcade', '1988-09-14', 'France', 'fourcade@email.com', 'hash_fourcade'),
-(13, 'Shohei Ohtani', '1994-07-05', 'Japan', 'ohtani@email.com', 'hash_ohtani'),
-(14, 'Mike Trout', '1991-08-07', 'USA', 'trout@email.com', 'hash_trout'),
-(15, 'Oleksandr "s1mple" Kostyliev', '1997-10-02', 'Ukraine', 's1mple@email.com', 'hash_s1mple'),
-(16, 'Mathieu "ZywOo" Herbaut', '2000-11-09', 'France', 'zywoo@email.com', 'hash_zywoo'),
-(17, 'Johan "N0tail" Sundstein', '1993-10-08', 'Denmark', 'notail@email.com', 'hash_notail'),
-(18, 'Clement "Puppey" Ivanov', '1990-03-06', 'Estonia', 'puppey@email.com', 'hash_puppey'),
-(19, 'Phil Ivey', '1977-02-01', 'USA', 'ivey@email.com', 'hash_ivey'),
-(20, 'Gerard Piqué', '1987-02-02', 'Spain', 'pique@email.com', 'hash_pique');
+INSERT INTO "Planner" ("organization_name", "contact_person", "email", "password_hash") VALUES
+('Global Sports Federation', 'John Doe', 'john.doe@gsf.com', 'hash1'),
+('World Poker Series Org', 'Jane Smith', 'jane.smith@wpso.com', 'hash2'),
+('Cyber Champions League', 'Alexey Ivanov', 'alex.i@ccl.com', 'hash3'),
+('International Chess Union', 'Magnus Carlsen', 'contact@icu.com', 'hash4'),
+('Major League Baseball Org', 'Mike Trout', 'mike.trout@mlb.com', 'hash5'),
+('FIA', 'Mohammed Ben Sulayem', 'contact@fia.com', 'hash6'),
+('International Biathlon Union', 'Olle Dahlin', 'info@ibu.com', 'hash7'),
+('FIFA', 'Gianni Infantino', 'president@fifa.com', 'hash8'),
+('International Hockey Federation', 'Luc Tardif', 'luc.tardif@iihf.com', 'hash9'),
+('Universal Sports Events', 'Peter Parker', 'p.parker@use.com', 'hash10');
 
-INSERT INTO "Team" ("id", "name", "country") VALUES
-(1, 'Real Madrid', 'Spain'),
-(2, 'PSG', 'France'),
-(3, 'Washington Capitals', 'USA'),
-(4, 'Edmonton Oilers', 'Canada'),
-(5, 'Natus Vincere', 'Ukraine'),
-(6, 'Team Vitality', 'France'),
-(7, 'Team Secret', 'EU'),
-(8, 'OG', 'EU'),
-(9, 'Los Angeles Dodgers', 'USA'),
-(10, 'New York Yankees', 'USA'),
-(11, 'Red Bull Racing', 'Austria'),
-(12, 'Mercedes-AMG Petronas F1 Team', 'Germany');
+INSERT INTO "Discipline" ("name", "unit", "result_format") VALUES
+('Football', 'goals', 'score'),
+('Ice Hockey', 'goals', 'score'),
+('Texas Hold''em Poker', 'chips', 'place'),
+('Dota 2', 'matches', 'score'),
+('CS:GO', 'rounds', 'score'),
+('Chess', 'points', 'win/loss/draw'),
+('Baseball', 'runs', 'score'),
+('Formula 1', 'time/laps', 'place/time'),
+('Biathlon Sprint 10km', 'time', 'time/misses'),
+('Triathlon', 'time', 'total_time');
 
-INSERT INTO "PrizeFund" ("id", "event_id", "total_amount") VALUES
-(1, 1, 1000000.00);
+INSERT INTO "Series" ("name", "start_date", "end_date") VALUES
+('World Athletic Games 2025', '2025-07-01', '2025-07-15'),
+('Winter Sports Festival 2026', '2026-02-05', '2026-02-25'),
+('Celebrity Poker Tour 2025', '2025-10-20', '2025-10-25'), 
+('Global Football Championship', '2025-06-10', '2025-07-10'),
+('International Hockey League', '2025-09-15', '2026-04-20'),
+('Esports Masters Series: Fall', '2025-11-01', '2025-11-15'),
+('Grandmasters Chess Circuit', '2025-05-05', '2025-05-15'),
+('American Baseball Classic', '2025-08-01', '2025-08-20'),
+('F1 World Championship 2025', '2025-03-15', '2025-11-23'),
+('Biathlon World Cup 25/26', '2025-11-29', '2026-03-22');
 
-INSERT INTO "Prize" ("id", "prize_fund_id", "place", "amount") VALUES
-(1, 1, 1, 500000.00),
-(2, 1, 2, 250000.00),
-(3, 1, 3, 100000.00),
-(4, 1, 4, 50000.00),
-(5, 1, 5, 25000.00),
-(6, 1, 6, 15000.00),
-(7, 1, 7, 10000.00),
-(8, 1, 8, 10000.00),
-(9, 1, 9, 10000.00),
-(10, 1, 10, 10000.00);
+INSERT INTO "Event" ("series_id", "discipline_id", "name", "start_date", "end_date", "status", "venue", "team_size_min", "team_size_max") VALUES
+(3, 3, 'Main Event - Texas Hold''em', '2025-10-20', '2025-10-25', 'Finished', 'Casino de Monte-Carlo, Monaco', 1, 1),
+(1, 1, 'Men''s Football Tournament', '2025-07-02', '2025-07-14', 'Preparing', 'Wembley Stadium, London', 11, 11),
+(1, 7, 'Baseball Championship', '2025-07-03', '2025-07-12', 'Preparing', 'Tokyo Dome, Tokyo', 9, 9),
+(2, 2, 'Men''s Ice Hockey', '2026-02-06', '2026-02-24', 'Preparing', 'Bell Centre, Montreal', 6, 22),
+(2, 9, 'Biathlon Men''s Sprint', '2026-02-10', '2026-02-10', 'Preparing', 'Holmenkollen, Oslo', 1, 1),
+(4, 1, 'Group Stage', '2025-06-10', '2025-06-25', 'Preparing', 'Various stadiums', 11, 11),
+(5, 2, 'Regular Season', '2025-09-15', '2026-03-30', 'Preparing', 'Various arenas', 6, 22),
+(6, 4, 'Dota 2 Championship', '2025-11-01', '2025-11-08', 'Preparing', 'Avicii Arena, Stockholm', 5, 5),
+(6, 5, 'CS:GO Major', '2025-11-09', '2025-11-15', 'Preparing', 'Lanxess Arena, Cologne', 5, 5),
+(7, 6, 'World Chess Blitz Championship', '2025-05-08', '2025-05-10', 'Preparing', 'Dubai Exhibition Centre, Dubai', 1, 1),
+(9, 8, 'Monaco Grand Prix', '2025-05-22', '2025-05-25', 'Preparing', 'Circuit de Monaco', 1, 2);
 
+INSERT INTO "Matchup" ("event_id", "name", "start_date", "end_date", "status") VALUES
+(1, 'Main Event - Day 1', '2025-10-20', '2025-10-21', 'Finished'),
+(1, 'Main Event - Final Table', '2025-10-25', '2025-10-25', 'Finished'),
+(2, 'Final: Team A vs Team B', '2025-07-14', '2025-07-14', 'Scheduled'),
+(4, 'Gold Medal Match', '2026-02-24', '2026-02-24', 'Scheduled'),
+(8, 'Grand Final', '2025-11-08', '2025-11-08', 'Scheduled'),
+(9, 'Grand Final', '2025-11-15', '2025-11-15', 'Scheduled'),
+(11, 'Race Day', '2025-05-25', '2025-05-25', 'Scheduled'),
+(6, 'Group A: Team 1 vs Team 2', '2025-06-11', '2025-06-11', 'Scheduled'),
+(7, 'Game Day 1: Team X vs Team Y', '2025-09-15', '2025-09-15', 'Scheduled'),
+(3, 'Final Game', '2025-07-12', '2025-07-12', 'Scheduled');
+
+INSERT INTO "Athlet" ("name", "date_of_birth", "country", "email", "password_hash") VALUES
+('Lionel Messi', '1987-06-24', 'Argentina', 'messi@email.com', 'hash_messi'),
+('Cristiano Ronaldo', '1985-02-05', 'Portugal', 'ronaldo@email.com', 'hash_ronaldo'),
+('Neymar Jr', '1992-02-05', 'Brazil', 'neymar@email.com', 'hash_neymar'),
+('Kylian Mbappé', '1998-12-20', 'France', 'mbappe@email.com', 'hash_mbappe'),
+('Alexander Ovechkin', '1985-09-17', 'Russia', 'ovechkin@email.com', 'hash_ovechkin'),
+('Connor McDavid', '1997-01-13', 'Canada', 'mcdavid@email.com', 'hash_mcdavid'),
+('Sidney Crosby', '1987-08-07', 'Canada', 'crosby@email.com', 'hash_crosby'),
+('Magnus Carlsen', '1990-11-30', 'Norway', 'carlsen@email.com', 'hash_carlsen'),
+('Max Verstappen', '1997-09-30', 'Netherlands', 'verstappen@email.com', 'hash_verstappen'),
+('Lewis Hamilton', '1985-01-07', 'UK', 'hamilton@email.com', 'hash_hamilton'),
+('Johannes Thingnes Bø', '1993-05-16', 'Norway', 'johannes.boe@email.com', 'hash_jboe'),
+('Martin Fourcade', '1988-09-14', 'France', 'fourcade@email.com', 'hash_fourcade'),
+('Shohei Ohtani', '1994-07-05', 'Japan', 'ohtani@email.com', 'hash_ohtani'),
+('Mike Trout', '1991-08-07', 'USA', 'trout@email.com', 'hash_trout'),
+('Oleksandr "s1mple" Kostyliev', '1997-10-02', 'Ukraine', 's1mple@email.com', 'hash_s1mple'),
+('Mathieu "ZywOo" Herbaut', '2000-11-09', 'France', 'zywoo@email.com', 'hash_zywoo'),
+('Johan "N0tail" Sundstein', '1993-10-08', 'Denmark', 'notail@email.com', 'hash_notail'),
+('Clement "Puppey" Ivanov', '1990-03-06', 'Estonia', 'puppey@email.com', 'hash_puppey'),
+('Phil Ivey', '1977-02-01', 'USA', 'ivey@email.com', 'hash_ivey'),
+('Gerard Piqué', '1987-02-02', 'Spain', 'pique@email.com', 'hash_pique');
+
+INSERT INTO "Team" ("name", "country") VALUES
+('Real Madrid', 'Spain'),
+('PSG', 'France'),
+('Washington Capitals', 'USA'),
+('Edmonton Oilers', 'Canada'),
+('Natus Vincere', 'Ukraine'),
+('Team Vitality', 'France'),
+('Team Secret', 'EU'),
+('OG', 'EU'),
+('Los Angeles Dodgers', 'USA'),
+('New York Yankees', 'USA'),
+('Red Bull Racing', 'Austria'),
+('Mercedes-AMG Petronas F1 Team', 'Germany');
+
+INSERT INTO "PrizeFund" ("event_id", "total_amount") VALUES
+(1, 1000000.00);
+
+INSERT INTO "Prize" ("prize_fund_id", "place", "amount") VALUES
+(1, 1, 500000.00),
+(1, 2, 250000.00),
+(1, 3, 100000.00),
+(1, 4, 50000.00),
+(1, 5, 25000.00),
+(1, 6, 15000.00),
+(1, 7, 10000.00),
+(1, 8, 10000.00),
+(1, 9, 10000.00),
+(1, 10, 10000.00);
 
 INSERT INTO "SeriesPlanner" ("planner_id", "series_id") VALUES
 (2, 3), (1, 1), (1, 2), (8, 4), (9, 5), (3, 6), (4, 7), (5, 8), (6, 9), (7, 10),
@@ -273,45 +298,55 @@ INSERT INTO "TeamMember" ("athlete_id", "team_id", "role") VALUES
 (1, 1, 'Captain'), (2, 2, 'Captain'), (5, 4, 'Forward'), (6, 3, 'Forward'),
 (15, 6, 'Rifler'), (16, 5, 'Rifler'), (18, 8, 'Support'), (17, 7, 'Support');
 
-INSERT INTO "AthletRegistration" ("id", "athlet_id", "matchup_id", "payment_status", "status") VALUES
-(1, 1, 1, 'Paid', 'Confirmed'), (2, 2, 1, 'Paid', 'Confirmed'), (3, 3, 1, 'Paid', 'Confirmed'),
-(4, 4, 1, 'Paid', 'Confirmed'), (5, 5, 1, 'Paid', 'Confirmed'), (6, 6, 1, 'Paid', 'Confirmed'),
-(7, 7, 1, 'Paid', 'Confirmed'), (8, 8, 1, 'Paid', 'Confirmed'), (9, 9, 1, 'Paid', 'Confirmed'),
-(10, 10, 1, 'Paid', 'Confirmed'), (11, 11, 1, 'Paid', 'Confirmed'), (12, 12, 1, 'Paid', 'Confirmed'),
-(13, 13, 1, 'Paid', 'Confirmed'), (14, 14, 1, 'Paid', 'Confirmed'), (15, 15, 1, 'Paid', 'Confirmed'),
-(16, 16, 1, 'Paid', 'Confirmed'), (17, 17, 1, 'Paid', 'Confirmed'), (18, 18, 1, 'Paid', 'Confirmed'),
-(19, 19, 1, 'Paid', 'Confirmed'), (20, 20, 1, 'Paid', 'Confirmed');
+INSERT INTO "AthletRegistration" ("athlet_id", "matchup_id", "payment_status", "status") VALUES
+(1, 1, 'Paid', 'Confirmed'), (2, 2, 'Paid', 'Confirmed'), (3, 3, 'Paid', 'Confirmed'),
+(4, 4, 'Paid', 'Confirmed'), (5, 5, 'Paid', 'Confirmed'), (6, 6, 'Paid', 'Confirmed'),
+(7, 7, 'Paid', 'Confirmed'), (8, 8, 'Paid', 'Confirmed'), (9, 9, 'Paid', 'Confirmed'),
+(10, 10, 'Paid', 'Confirmed'), 
+(11, 1, 'Paid', 'Confirmed'), (12, 2, 'Paid', 'Confirmed'), (13, 3, 'Paid', 'Confirmed'),
+(14, 4, 'Paid', 'Confirmed'), (15, 5, 'Paid', 'Confirmed'), (16, 6, 'Paid', 'Confirmed'),
+(17, 7, 'Paid', 'Confirmed'), (18, 8, 'Paid', 'Confirmed'), (19, 9, 'Paid', 'Confirmed'),
+(20, 10, 'Paid', 'Confirmed');
 
-INSERT INTO "TeamRegistration" ("id", "matchup_id", "team_id", "payment_status", "status") VALUES
-(1, 3, 1, 'Pending', 'Registered'), (2, 3, 2, 'Pending', 'Registered'),
-(3, 4, 3, 'Pending', 'Registered'), (4, 4, 4, 'Pending', 'Registered'),
-(5, 5, 7, 'Pending', 'Registered'), (6, 5, 8, 'Pending', 'Registered'),
-(7, 6, 5, 'Pending', 'Registered'), (8, 6, 6, 'Pending', 'Registered'),
-(9, 10, 9, 'Pending', 'Registered'), (10, 10, 10, 'Pending', 'Registered'),
-(11, 8, 1, 'Pending', 'Registered'), (12, 8, 2, 'Pending', 'Registered'),
-(13, 9, 3, 'Pending', 'Registered'), (14, 9, 4, 'Pending', 'Registered'),
-(15, 3, 5, 'Pending', 'Registered'), (16, 3, 6, 'Pending', 'Registered'),
-(17, 4, 7, 'Pending', 'Registered'), (18, 4, 8, 'Pending', 'Registered'),
-(19, 5, 9, 'Pending', 'Registered'), (20, 5, 10, 'Pending', 'Registered');
+INSERT INTO "TeamRegistration" ("matchup_id", "team_id", "payment_status", "status") VALUES
+(1, 3, 'Pending', 'Registered'), (2, 3, 'Pending', 'Registered'),
+(3, 4, 'Pending', 'Registered'), (4, 4, 'Pending', 'Registered'),
+(5, 5, 'Pending', 'Registered'), (6, 5, 'Pending', 'Registered'),
+(7, 6, 'Pending', 'Registered'), (8, 6, 'Pending', 'Registered'),
+(9, 10, 'Pending', 'Registered'), (10, 10, 'Pending', 'Registered'),
+(1, 8, 'Pending', 'Registered'), (2, 8, 'Pending', 'Registered'),
+(3, 9, 'Pending', 'Registered'), (4, 9, 'Pending', 'Registered'),
+(5, 3, 'Pending', 'Registered'), (6, 3, 'Pending', 'Registered'),
+(7, 4, 'Pending', 'Registered'), (8, 4, 'Pending', 'Registered'),
+(9, 5, 'Pending', 'Registered'), (10, 5, 'Pending', 'Registered');
 
-INSERT INTO "MatchupResult" ("id", "matchup_id", "athlet_registration_id", "team_registration_id", "result", "place", "status") VALUES
-(1, 2, 19, NULL, 'Winner', 1, 'Official'), 
-(2, 2, 8, NULL, 'Finalist', 2, 'Official'), 
-(3, 2, 3, NULL, 'Finalist', 3, 'Official'), 
-(4, 2, 20, NULL, 'Finalist', 4, 'Official'),
-(5, 2, 5, NULL, 'Finalist', 5, 'Official'), 
-(6, 2, 2, NULL, 'Finalist', 6, 'Official'), 
-(7, 2, 9, NULL, 'Finalist', 7, 'Official'), 
-(8, 2, 13, NULL, 'Finalist', 8, 'Official'), 
-(9, 2, 17, NULL, 'Finalist', 9, 'Official'), 
-(10, 2, 1, NULL, 'Eliminated', 10, 'Official'), 
-(11, 2, 4, NULL, 'Eliminated', 11, 'Official'),
-(12, 2, 6, NULL, 'Eliminated', 12, 'Official'),
-(13, 2, 7, NULL, 'Eliminated', 13, 'Official'),
-(14, 2, 10, NULL, 'Eliminated', 14, 'Official'),
-(15, 2, 11, NULL, 'Eliminated', 15, 'Official'),
-(16, 2, 12, NULL, 'Eliminated', 16, 'Official'),
-(17, 2, 14, NULL, 'Eliminated', 17, 'Official'),
-(18, 2, 15, NULL, 'Eliminated', 18, 'Official'),
-(19, 2, 16, NULL, 'Eliminated', 19, 'Official'),
-(20, 2, 18, NULL, 'Eliminated', 20, 'Official');
+INSERT INTO "MatchupResult" ("matchup_id", "athlet_registration_id", "team_registration_id", "result", "place", "status") VALUES
+(1, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 1 AND matchup_id = 1), NULL, '15000 chips', 1, 'Official'),
+(1, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 11 AND matchup_id = 1), NULL, '5000 chips', 2, 'Official'),
+
+(2, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 2 AND matchup_id = 2), NULL, '200000 chips', 1, 'Official'),
+(2, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 12 AND matchup_id = 2), NULL, '150000 chips', 2, 'Official'),
+
+(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 3), '2-1', 1, 'Official'),
+(3, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 9 AND matchup_id = 3), '1-2', 2, 'Official'),
+
+(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 4), '4-3', 1, 'Official'),
+(4, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 9 AND matchup_id = 4), '3-4', 2, 'Official'),
+
+(5, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 5), '3-2', 1, 'Official'),
+(5, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 3 AND matchup_id = 5), '2-3', 2, 'Official'),
+
+(6, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 6), '16-14', 1, 'Official'),
+(6, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 3 AND matchup_id = 6), '14-16', 2, 'Official'),
+
+(7, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 9 AND matchup_id = 7), NULL, '1:34:22.123', 1, 'Official'),
+(7, (SELECT id FROM "AthletRegistration" WHERE athlet_id = 17 AND matchup_id = 7), NULL, '1:34:23.500', 2, 'Official'),
+
+(8, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 6 AND matchup_id = 8), '3-0', 1, 'Official'),
+(8, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 4 AND matchup_id = 8), '0-3', 2, 'Official'),
+
+(9, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 10 AND matchup_id = 9), '5-4', 1, 'Official'),
+(9, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 9), '4-5', 2, 'Official'),
+
+(10, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 10 AND matchup_id = 10), '5-3', 1, 'Official'),
+(10, NULL, (SELECT id FROM "TeamRegistration" WHERE team_id = 5 AND matchup_id = 10), '3-5', 2, 'Official');
