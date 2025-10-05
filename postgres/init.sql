@@ -1,5 +1,5 @@
-CREATE DATABASE "sports";
-
+-- We don't need CREATE DATABASE since db is initialised in docker-compose.yml
+-- CREATE DATABASE "sports";
 CREATE TYPE EventStatus AS ENUM ('Preparing', 'Scheduled', 'InProgress', 'Finished', 'Canceled', 'Postponed');
 
 CREATE TYPE PaymentStatus AS ENUM ('Pending', 'Paid', 'Failed', 'Refunded');
