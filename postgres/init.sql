@@ -4,7 +4,7 @@ CREATE TYPE EventStatus AS ENUM ('Preparing', 'Scheduled', 'InProgress', 'Finish
 
 CREATE TYPE PaymentStatus AS ENUM ('Pending', 'Paid', 'Failed', 'Refunded');
 
-CREATE TYPE RegistrationStatus AS ENUM ('Confirmed', 'Registered', 'PendingApproval', 'Withdrawn', 'Disqualified');
+CREATE TYPE RegistrationStatus AS ENUM ('Confirmed', 'Registered', 'Pending', 'Withdrawn', 'Disqualified');
 
 CREATE TYPE ResultStatus AS ENUM ('Provisional', 'Official', 'Disputed', 'Canceled');
 
@@ -421,13 +421,13 @@ VALUES
     (SELECT id FROM "Athlet" WHERE name = 'Neymar Jr'),
     (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
     'Pending',
-    'Confirmed'
+    'Pending'
 ),
 (
     (SELECT id FROM "Athlet" WHERE name = 'Kylian Mbappé'),
-    (SELECT id FROM "Matchup" WHERE name = 'Gold Medal Match' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Ice Hockey')),
+    (SELECT id FROM "Matchup" WHERE name = 'Final: Team A vs Team B' AND event_id = (SELECT id FROM "Event" WHERE name = 'Men''s Football Tournament')),
     'Pending',
-    'Confirmed'
+    'Pending'
 ),
 (
     (SELECT id FROM "Athlet" WHERE name = 'Alexander Ovechkin'),
