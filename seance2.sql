@@ -15,7 +15,7 @@ WHERE
             JOIN "Athlet" a ON a.id = ar.athlet_id
             JOIN "Matchup" m ON m.id = ar.matchup_id
         WHERE
-            a.name = 'Neymar Jr' m.name = 'Final: Team A vs Team B'
+            a.name = 'Neymar Jr' AND m.name = 'Final: Team A vs Team B'
     );
 
 -- 4
