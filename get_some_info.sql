@@ -1,3 +1,4 @@
+-- Active: 1754635811164@@127.0.0.1@5432@sports@public
 -- Задача - вывести результаты финального стола в турнире Celebrity Poker Tour 2025
 -- Может использоваться в случаях, когда нужны конкретные результаты конкретных игр,
 -- например для букмекерских контор или просто для людей, которым интересно
@@ -15,7 +16,8 @@ WHERE
 ORDER BY MR.place
 LIMIT 10
 
--- Задача - показать всех спортсменов, зарегистрированных на завершённые мероприяти, включая название мероприятия и статус оплаты.
+-- Задача - показать всех спортсменов, зарегистрированных на завершённые мероприяти, 
+-- включая название мероприятия и статус оплаты.
 -- Может быть полезным для отчётности о проведённых мероприятиях для организаторов,
 -- а также для мониторинга работоспособности сервиса для разработчиков в тестах
 SELECT
@@ -75,3 +77,37 @@ GROUP BY
 ORDER BY
     count_athlet_registrations DESC,
     count_team_registrations DESC;
+
+SELECT
+    A.name AS athlet_name,
+    S.name AS series,
+    E.name AS event,
+    M.name AS matchup,
+    D.name AS discipline,
+    MR.result
+FROM
+    "Athlet" A
+    JOIN "AthletRegistration" AR ON AR.athlet_id = A.id
+    JOIN "Matchup" M ON M.id = AR.matchup_id
+    JOIN "MatchupResult" MR ON M.id = MR.matchup_id
+    JOIN "Event" E ON E.id = M.event_id
+    JOIN "Discipline" D ON D.id = E.discipline_id
+    JOIN "Series" S ON S.id = E.series_id
+WHERE
+    -- A.name = 'Lionel Messi'
+    M.name = 'Main Event - Day 1'
+
+SELECT 
+    m.name as matchup,
+    mr.result,
+    mr.place,
+    mr.status,
+    mr.outcome,
+    m.start_date
+FROM "MatchupResult" mr
+JOIN "Matchup" m ON mr.matchup_id = m.id
+JOIN "AthletRegistration" ar ON mr.athlet_registration_id = ar.id
+JOIN "Athlet" a ON ar.athlet_id = a.id
+WHERE a.name = 'Lightning McQueen'
+    AND m.start_date BETWEEN '2011-01-01' AND '2011-12-31'
+ORDER BY m.start_date
