@@ -10,11 +10,11 @@ services:
       - "-c"
       - "shared_buffers=1GB"
       - "-c"
-      - "effective_cache_size=4GB"
+      - "effective_cache_size=6GB"
       - "-c"
-      - "work_mem=16MB"
+      - "work_mem=8MB"
       - "-c"
-      - "maintenance_work_mem=1GB" # !!!
+      - "maintenance_work_mem=2GB" # !!!
       - "-c"
       - "wal_level=minimal" # !!!
       - "-c"
@@ -42,12 +42,13 @@ services:
       # - "-c"
       # - "pg_stat_statements.track=all"
     environment:
-      POSTGRES_DB: "sports" # "postgres"
+      POSTGRES_DB: "sports_olap" # "postgres"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "password"
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    shm_size: '1g'
     ports:
       - "5432:5432"
     healthcheck:
@@ -60,8 +61,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1GB
+          cpus: '2'
+          memory: 4GB
     networks:
       - postgres
 
