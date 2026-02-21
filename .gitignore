@@ -1,1 +1,3 @@
 .vscode
+postgres/init_*.sql
+postgres/lab3_1
